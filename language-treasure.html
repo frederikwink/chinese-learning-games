@@ -222,7 +222,11 @@
                 <div style="display:flex; justify-content:space-between; width:100%; font-weight:bold; margin-bottom:10px;">
                     <span id="bal-lvl">第 1 題</span><span id="bal-score">🌟 分數: 0</span>
                 </div>
-                <div class="target-word-box"><div class="target-word" id="bal-word">漢字</div></div>
+                <div class="target-word-box"><div class="target-word" id="bal-word">漢字</div>
+                <!-- 放喺 <div class="target-word-box"> ... </div> 之後 -->
+                <button class="btn btn-blue" onclick="repeatWord()" style="margin-top:10px;">
+                🔊 重聽題目
+                </button></div>
                 <div style="display:flex; justify-content:center; flex-wrap:wrap; width:100%;" id="bal-area"></div>
                 <button class="btn-restart" onclick="resetGame('balloon')">🔙 重新出題</button>
             </div>
@@ -448,6 +452,9 @@
     let q = balQs[balCur];
     document.getElementById('bal-word').innerText = q.w;
     
+    // === 新增：每出一題自動讀漢字 ===
+    speakPinyin(q.w);
+    
     let area = document.getElementById('bal-area');
     area.innerHTML = '';
     
@@ -457,7 +464,7 @@
         div.innerText = o;
         
         div.onclick = () => {
-            speakPinyin(o);
+            speakPinyin(o);   // 點擊氣球讀拼音
             
             if (o === q.c) {
                 div.classList.add('popped');
@@ -489,6 +496,10 @@ function speakPinyin(text) {
     u.rate = 0.82;
     u.pitch = 1.05;
     synth.speak(u);
+}
+        function repeatWord() {
+        let word = document.getElementById('bal-word').innerText;
+        if (word) speakPinyin(word);
 }
 
         // ================= 5. 聲調過山車 =================
