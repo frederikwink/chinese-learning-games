@@ -509,44 +509,44 @@ function speakPinyin(text) {
             document.getElementById('rc-car').style.animation='none';
             setTimeout(playRCSound, 500);
         }
-        function playRCSound() {
-    if (synth.speaking) synth.cancel();
-    
-    let btn = document.getElementById('rc-audio');
-    btn.classList.add('playing');
-    
-    let utterance = new SpeechSynthesisUtterance(rcQs[rcCur].p);
-    utterance.lang = 'zh-CN';
-    utterance.rate = 0.75;
-    utterance.pitch = 1.05;
-    utterance.volume = 1;
-    
-    utterance.onend = () => btn.classList.remove('playing');
-    utterance.onerror = () => btn.classList.remove('playing');
-    
-    synth.speak(utterance);
-}
+                function playRCSound() {
+            if (synth.speaking) synth.cancel();
+        
+            let btn = document.getElementById('rc-audio');
+            btn.classList.add('playing');
+        
+            let utterance = new SpeechSynthesisUtterance(rcQs[rcCur].p);
+            utterance.lang = 'zh-CN';
+            utterance.rate = 0.75;
+            utterance.pitch = 1.05;
+            utterance.volume = 1;
+        
+            utterance.onend = () => btn.classList.remove('playing');
+            utterance.onerror = () => btn.classList.remove('playing');
+        
+            synth.speak(utterance);
+        }
 
-function checkRCTone(t) {
-    let box = document.getElementById('rc-box');
-    let car = document.getElementById('rc-car');
-    
-    if (t === rcQs[rcCur].t) {
-        car.style.animation = `drive${t} 1.5s ease-in-out forwards`;
-        setTimeout(() => {
-            if (rcCur < rcQs.length - 1) {
-                rcCur++;
-                loadRC();
+        function checkRCTone(t) {
+            let box = document.getElementById('rc-box');
+            let car = document.getElementById('rc-car');
+            
+            if (t === rcQs[rcCur].t) {
+                car.style.animation = `drive${t} 1.5s ease-in-out forwards`;
+                setTimeout(() => {
+                    if (rcCur < rcQs.length - 1) {
+                        rcCur++;
+                        loadRC();
+                    } else {
+                        showModal("完成！", "過山車之旅結束！", "🏆", "返回", () => resetGame('rollercoaster'));
+                    }
+                }, 1600);
             } else {
-                showModal("完成！", "過山車之旅結束！", "🏆", "返回", () => resetGame('rollercoaster'));
+                box.style.animation = 'shake 0.4s';
+                setTimeout(() => box.style.animation = '', 400);
+                playRCSound();
             }
-        }, 1600);
-    } else {
-        box.style.animation = 'shake 0.4s';
-        setTimeout(() => box.style.animation = '', 400);
-        playRCSound();
-    }
-}
+        }
     </script>
 </body>
 </html>
