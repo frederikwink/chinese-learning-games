@@ -482,12 +482,25 @@
             setTimeout(playRCSound, 500);
         }
         function playRCSound() {
-            if(synth.speaking) synth.cancel();
-            let btn = document.getElementById('rc-audio'); btn.classList.add('playing');
-            let u = new SpeechSynthesisUtterance(rcQs[rcCur].p);
-            u.lang='zh-CN'; u.rate=0.8; u.onend=()=>btn.classList.remove('playing');
-            synth.speak(u);
-        }
+        if (synth.speaking) synth.cancel();
+    
+        let btn = document.getElementById('rc-audio');
+        btn.classList.add('playing');
+    
+        let utterance = new SpeechSynthesisUtterance(rcQs[rcCur].p);
+        utterance.lang = 'zh-CN';      // 普通話
+        utterance.rate = 0.75;         // 稍慢，讀得清楚啲
+        utterance.pitch = 1.05;        // 輕微提高音調
+        utterance.volume = 1;
+    
+        utterance.onend = () => btn.classList.remove('playing');
+        utterance.onerror = () => {
+        btn.classList.remove('playing');
+        console.log("朗讀失敗，建議用手機測試");
+        };
+
+        synth.speak(utterance);
+            
         function checkRCTone(t) {
             let box=document.getElementById('rc-box'), car=document.getElementById('rc-car');
             if(t===rcQs[rcCur].t) {
