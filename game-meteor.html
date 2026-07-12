@@ -233,6 +233,10 @@
         let score = 0;
         let hp = 5;
         let isPlaying = false;
+
+        // ========= 音效 =========
+        const shootSound = document.getElementById('shoot-sound');
+        const explosionSound = document.getElementById('explosion-sound');
         
         // 實體陣列
         let meteors = [];
@@ -324,13 +328,17 @@
         function stopShooting() { clearInterval(shootTimer); }
 
         function fireBullet() {
-            const bullet = document.createElement('div');
-            bullet.className = 'bullet';
-            bullet.style.left = `${playerX}px`;
-            bullet.style.bottom = '40px'; // 砲口高度
-            field.appendChild(bullet);
-            
-            bullets.push({ el: bullet, x: playerX, y: field.clientHeight - 40 });
+        const bullet = document.createElement('div');
+        bullet.className = 'bullet';
+        bullet.style.left = `${playerX}px`;
+        bullet.style.bottom = '40px';
+        field.appendChild(bullet);
+    
+        bullets.push({ el: bullet, x: playerX, y: field.clientHeight - 40 });
+
+        // === 播放射擊音效 ===
+        shootSound.currentTime = 0;   // 重置播放位置
+        shootSound.play().catch(() => {}); // 防止瀏覽器自動播放限制
         }
 
         // 隕石生成
@@ -446,6 +454,9 @@
                             score += 10;
                             document.getElementById('score').textContent = score;
                             createFloatText(m.x, m.y, "+10", "#ffd54f");
+                            // === 播放爆炸音效 ===
+                            explosionSound.currentTime = 0;
+                            explosionSound.play().catch(() => {});
                         } else {
                             // 誤擊正確字：扣血扣分
                             score -= 10;
