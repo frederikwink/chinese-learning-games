@@ -225,13 +225,13 @@
                 <div class="target-word-box"><div class="target-word" id="bal-word">漢字</div>
                 <!-- 放喺 <div class="target-word-box"> ... </div> 之後 -->
                 <button class="btn btn-blue" onclick="repeatWord()" style="margin-top:10px;">
-                🔊 重聽題目
+                🔊 聽題目
                 </button></div>
                                 <div style="display:flex; justify-content:center; flex-wrap:wrap; width:100%;" id="bal-area"></div>
                 
                 <!-- 提示文字 -->
                 <p style="font-size:0.85rem; color:#666; margin-top:15px; text-align:center;">
-                    錄音功能開發階段，需要老師輔助教學
+                    讀音功能尚在開發階段，需要老師輔助教學
                 </p>
                 
                 <button class="btn-restart" onclick="resetGame('balloon')">🔙 重新出題</button>
@@ -265,7 +265,7 @@
                 
                 <!-- 提示文字 -->
                 <p style="font-size:0.85rem; color:#666; margin-top:15px; text-align:center;">
-                    錄音功能開發階段，需要老師輔助教學
+                    讀音功能尚在開發階段，需要老師輔助教學
                 </p>
                 
                 <button class="btn-restart" onclick="resetGame('rollercoaster')">🔙 重新出題</button>
@@ -530,7 +530,6 @@ function speakPinyin(text) {
             document.getElementById('rc-lvl').innerText=`第 ${rcCur+1} 題`;
             document.getElementById('rc-pinyin').innerText=rcQs[rcCur].p;
             document.getElementById('rc-car').style.animation='none';
-            setTimeout(playRCSound, 500);
         }
                 function playRCSound() {
             if (synth.speaking) synth.cancel();
