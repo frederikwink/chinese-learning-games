@@ -452,8 +452,7 @@
     let q = balQs[balCur];
     document.getElementById('bal-word').innerText = q.w;
     
-    // === 新增：每出一題自動讀漢字 ===
-    speakPinyin(q.w);
+    // === 移除自動朗讀 ===
     
     let area = document.getElementById('bal-area');
     area.innerHTML = '';
@@ -464,6 +463,7 @@
         div.innerText = o;
         
         div.onclick = () => {
+            // === 移除撳氣球時朗讀 ===
             
             if (o === q.c) {
                 div.classList.add('popped');
