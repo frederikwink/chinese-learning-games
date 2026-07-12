@@ -1,0 +1,472 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>🏫 全能語文特訓大本營</title>
+    <style>
+        :root { 
+            --primary: #5C6BC0; --primary-dark: #3F51B5;
+            --secondary: #FFCA28; --secondary-dark: #FFB300;
+            --bg-color: #F4F6F9; --text: #37474F; 
+        }
+        
+        body { font-family: "Microsoft JhengHei", "微軟正黑體", sans-serif; background-color: var(--bg-color); color: var(--text); margin: 0; padding: 0; display: flex; flex-direction: column; align-items: center; min-height: 100vh; overflow-x: hidden; }
+        
+        header { background: linear-gradient(135deg, var(--primary), #7E57C2); width: 100%; padding: 20px 0 0 0; text-align: center; color: white; box-shadow: 0 4px 15px rgba(0,0,0,0.1); border-bottom: 5px solid var(--secondary); }
+        h1 { margin: 0; font-size: 2.2rem; text-shadow: 1px 1px 3px rgba(0,0,0,0.3); }
+        .subtitle { font-size: 1.1rem; opacity: 0.9; margin-top: 5px; margin-bottom: 15px;}
+
+        /* 導航列 */
+        .tabs { display: flex; justify-content: center; gap: 8px; flex-wrap: wrap; padding: 0 10px 15px 10px;}
+        .tab-btn { background: rgba(255,255,255,0.2); border: 2px solid white; color: white; padding: 10px 15px; border-radius: 20px; font-size: 1rem; cursor: pointer; font-weight: bold; transition: all 0.2s; }
+        .tab-btn:hover { background: rgba(255,255,255,0.3); }
+        .tab-btn.active { background: var(--secondary); border-color: var(--secondary); color: #333; box-shadow: 0 4px 10px rgba(255, 202, 40, 0.5); transform: scale(1.05); }
+
+        .container { width: 95%; max-width: 850px; margin: 30px auto; background: #ffffff; border-radius: 20px; box-shadow: 0 10px 25px rgba(0,0,0,0.08); padding: 25px; box-sizing: border-box; }
+        
+        .game-section { display: none; }
+        .game-section.active { display: block; animation: fadeIn 0.5s; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* 共用 UI 元素 */
+        .setup-box { background: #F5F5F5; padding: 20px; border-radius: 12px; border-left: 6px solid var(--primary); margin-bottom: 25px; }
+        .setup-box h3 { color: var(--primary-dark); margin-top: 0; font-size: 1.3rem; border-bottom: 2px dashed #B0BEC5; padding-bottom: 10px;}
+        textarea { width: 100%; padding: 12px; font-size: 1.1rem; border: 2px solid #CFD8DC; border-radius: 8px; box-sizing: border-box; margin-top: 8px; line-height: 1.6; resize: vertical;}
+        .hint-block { background: #E3F2FD; padding: 12px; border-radius: 8px; font-size: 0.95rem; color: #1565C0; margin-bottom: 10px; border: 1px solid #90CAF9;}
+        
+        .play-area { display: none; flex-direction: column; align-items: center; width: 100%; }
+        .level-indicator { background: var(--secondary); color: #333; padding: 5px 15px; border-radius: 20px; font-weight: bold; font-size: 1.2rem; margin-bottom: 15px; box-shadow: 0 2px 5px rgba(0,0,0,0.1); display: inline-block;}
+        .guide-box { background: #FFF8E1; border: 2px dashed var(--secondary); border-radius: 12px; padding: 15px; margin-bottom: 20px; width: 100%; box-sizing: border-box;}
+        
+        /* 共用按鈕 */
+        .btn { background: var(--secondary); color: #333; border: none; padding: 12px 25px; font-size: 1.2rem; border-radius: 25px; cursor: pointer; font-weight: bold; box-shadow: 0 4px 0 var(--secondary-dark); transition: 0.1s; display: inline-block; margin: 10px 5px 0;}
+        .btn:active { transform: translateY(4px); box-shadow: 0 0 0 transparent; }
+        .btn-blue { background: #42A5F5; color: white; box-shadow: 0 4px 0 #1E88E5; }
+        .btn-red { background: #FF6B6B; color: white; box-shadow: 0 4px 0 #C44536; }
+        .btn-restart { background: #9E9E9E; color: white; box-shadow: 0 4px 0 #757575; font-size: 1rem; padding: 10px 20px; margin-top: 20px;}
+
+        /* ============== 各遊戲專屬 CSS ============== */
+        
+        /* 遊戲 1: 火車 */
+        .train-carriage { display: flex; align-items: center; background: #E8EAF6; border: 3px solid #7986CB; border-radius: 12px; padding: 10px 15px; margin-bottom: 10px; width: 100%; box-sizing:border-box;}
+        .ctrl-btn { background: #9FA8DA; color: white; border: none; border-radius: 5px; width: 35px; height: 35px; font-size: 1.2rem; cursor: pointer; font-weight: bold; margin: 2px;}
+        
+        /* 遊戲 2: 偵探 */
+        .detective-passage { font-size: 1.3rem; line-height: 2.2; padding: 25px; background: #FAFAFA; border-radius: 12px; border: 2px solid #E0E0E0; text-align: left; width: 100%; box-sizing: border-box; margin-bottom: 20px;}
+        .detective-sentence { cursor: pointer; padding: 4px; border-radius: 6px; transition: 0.2s; border: 1px solid transparent;}
+        .detective-sentence.selected { background: #FFEB3B; font-weight: bold; border-color: #FBC02D;}
+        .detective-sentence.correct { background: #C8E6C9; color: #1B5E20;}
+        .detective-sentence.wrong { background: #FFCDD2; color: #B71C1C;}
+
+        /* 遊戲 3: RPG */
+        .rpg-battle { display: flex; justify-content: space-between; align-items: center; padding: 20px; background: #D7CCC8; border-radius: 10px; width: 100%; box-sizing: border-box;}
+        .rpg-opt-btn { background: white; border: 2px solid #8D6E63; padding: 10px; border-radius: 8px; cursor: pointer; text-align: left; font-weight: bold; width: 100%; margin-bottom: 8px;}
+        .rpg-opt-btn.correct { background: #C8E6C9; border-color: #4CAF50;}
+        .rpg-opt-btn.wrong { background: #FFCDD2; border-color: #F44336; animation: shake 0.3s; }
+
+        /* 遊戲 4: 氣球 */
+        .target-word-box { background: white; border: 4px dashed #FF6B6B; border-radius: 20px; padding: 20px; text-align: center; margin-bottom: 30px; min-width: 250px;}
+        .target-word { font-size: 4rem; font-weight: bold; letter-spacing: 5px; margin:0;}
+        .balloon { width: 100px; height: 130px; border-radius: 50% 50% 50% 50% / 40% 40% 60% 60%; position: relative; cursor: pointer; display: flex; justify-content: center; align-items: center; font-weight: bold; font-size: 1.5rem; color: #333; box-shadow: inset -10px -10px 15px rgba(0,0,0,0.1); margin: 10px; background: radial-gradient(circle at 30% 30%, #A1C4FD, #C2E9FB); animation: floatUpDown 3s ease-in-out infinite alternate;}
+        .balloon.popped { transform: scale(0); opacity: 0; pointer-events: none; }
+        .balloon.wrong-shake { animation: shake 0.4s; background: #FFCDD2; }
+
+        /* 遊戲 5: 過山車 */
+        .magic-box { background: white; border: 5px solid #1E88E5; border-radius: 25px; padding: 30px; text-align: center; margin-bottom: 30px; position: relative; width: 100%; box-sizing:border-box;}
+        .audio-btn { background: #FFCA28; border: none; border-radius: 50%; width: 60px; height: 60px; font-size: 2rem; cursor: pointer; box-shadow: 0 4px 0 #F57F17; }
+        .audio-btn.playing { animation: pulse 1s infinite; }
+        .tracks-container { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; width: 100%; max-width: 500px;}
+        .track-btn { border: none; border-radius: 15px; padding: 15px; cursor: pointer; color: white; font-weight: bold; box-shadow: 0 6px 0 rgba(0,0,0,0.15);}
+        .car-animation { position: absolute; font-size: 3rem; top: -20px; left: -50px; opacity: 0;}
+        
+        /* 共用動畫 */
+        @keyframes shake { 0%, 100% { transform: translateX(0); } 25%, 75% { transform: translateX(-5px); } 50% { transform: translateX(5px); } }
+        @keyframes floatUpDown { 0% { transform: translateY(0); } 100% { transform: translateY(-15px); } }
+        @keyframes pulse { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
+        @keyframes drive1 { 0% { left: -50px; top: 10px; opacity: 1; } 100% { left: 110%; top: 10px; opacity: 1; } }
+        @keyframes drive2 { 0% { left: -20px; top: 60px; opacity: 1; } 100% { left: 110%; top: -30px; opacity: 1; } }
+        @keyframes drive3 { 0% { left: 0px; top: -10px; opacity: 1; } 50% { left: 50%; top: 60px; opacity: 1;} 100% { left: 100%; top: -10px; opacity: 1; } }
+        @keyframes drive4 { 0% { left: 0px; top: -30px; opacity: 1; } 100% { left: 110%; top: 60px; opacity: 1; } }
+
+        /* 共用 Modal */
+        #modal { position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.7); display: none; justify-content: center; align-items: center; z-index: 1000; backdrop-filter: blur(2px);}
+        .modal-content { background: white; padding: 30px; border-radius: 20px; text-align: center; max-width: 350px; animation: popIn 0.4s; }
+        .modal-icon { font-size: 4rem; margin-bottom: 10px; }
+        @keyframes popIn { 0% { transform: scale(0.5); opacity: 0; } 100% { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    <header>
+        <h1>🏫 全能語文特訓大本營</h1>
+        <div class="subtitle">五合一教學百寶箱</div>
+        <div class="tabs">
+            <button class="tab-btn active" onclick="switchTab('game-train', this)">🚂 故事火車</button>
+            <button class="tab-btn" onclick="switchTab('game-detective', this)">🔎 尋找線索</button>
+            <button class="tab-btn" onclick="switchTab('game-rpg', this)">⚔️ 勇者推理</button>
+            <button class="tab-btn" onclick="switchTab('game-balloon', this)">🎈 拼音氣球</button>
+            <button class="tab-btn" onclick="switchTab('game-rollercoaster', this)">🎢 聲調過山車</button>
+        </div>
+    </header>
+
+    <div class="container">
+
+        <div id="game-train" class="game-section active">
+            <div id="setup-train" class="setup-box">
+                <h3>👨‍🏫 重組故事 (閱讀-初小)</h3>
+                <div class="hint-block">每一行代表一句話。想增加新關卡，請<strong>空一行</strong>隔開！</div>
+                <textarea id="train-input" rows="8">
+早上，下起大雨。
+小明忘記帶傘。
+他在屋簷下避雨。
+媽媽拿傘來接他。</textarea>
+                <button class="btn btn-blue" onclick="initTrain()">✨ 啟動火車</button>
+            </div>
+            <div id="play-train" class="play-area">
+                <div class="level-indicator" id="train-lvl">關卡 1 / 1</div>
+                <div class="guide-box"><p>任務：把句子重新排成正確的順序！</p></div>
+                <div id="train-track" style="width:100%;"></div>
+                <button class="btn" onclick="checkTrainOrder()">✅ 檢查順序</button>
+                <button class="btn-restart" onclick="resetGame('train')">🔙 重新出題</button>
+            </div>
+        </div>
+
+        <div id="game-detective" class="game-section">
+            <div id="setup-detective" class="setup-box">
+                <h3>👨‍🏫 尋找明示線索 (閱讀-中小)</h3>
+                <div class="hint-block">將包含答案的那句話用 <strong>【】</strong> 括起來！增加關卡請空一行。</div>
+                <textarea id="detective-input" rows="8">
+問題：是甚麼動物嚇哭了妹妹？
+文章：星期天，我們去野餐。【突然，一隻小野豬跑了過來。】嚇得妹妹大哭起來。爸爸連忙把野豬趕走。</textarea>
+                <button class="btn btn-blue" onclick="initDetective()">✨ 啟動偵探</button>
+            </div>
+            <div id="play-detective" class="play-area">
+                <div class="level-indicator" id="det-lvl">關卡 1 / 1</div>
+                <div class="guide-box"><p>任務：閱讀問題，在文章中點擊包含答案的句子！</p></div>
+                <div id="det-question" style="font-weight:bold; color:#0277BD; margin-bottom:10px;">❓ 問題：</div>
+                <div id="det-passage" class="detective-passage"></div>
+                <button class="btn" onclick="checkDetective()">✅ 鎖定線索</button>
+                <button class="btn-restart" onclick="resetGame('detective')">🔙 重新出題</button>
+            </div>
+        </div>
+
+        <div id="game-rpg" class="game-section">
+            <div id="setup-rpg" class="setup-box">
+                <h3>👨‍🏫 深層推理 (閱讀-高小)</h3>
+                <div class="hint-block">請標明：文章、問題、正確、錯誤。增加新關卡請空一行。</div>
+                <textarea id="rpg-input" rows="8">
+文章：看著滿江紅的數學測驗卷，志明的眼淚一直在眼眶裡打轉。
+問題：志明現在的心情是怎樣的？
+正確：感到害怕和沮喪
+錯誤：非常興奮期待
+錯誤：對數學充滿信心</textarea>
+                <button class="btn btn-blue" onclick="initRpg()">✨ 建立推理塔</button>
+            </div>
+            <div id="play-rpg" class="play-area">
+                <div class="level-indicator" id="rpg-lvl">樓層 1 / 1</div>
+                <div class="guide-box"><p>任務：推論出隱含意思，選擇答案打敗怪物！</p></div>
+                <div style="background:white; padding:15px; border-radius:10px; margin-bottom:15px; border:2px solid #ccc; width:100%; box-sizing:border-box;" id="rpg-text"></div>
+                <div style="font-weight:bold; margin-bottom:10px; width:100%;" id="rpg-q"></div>
+                <div class="rpg-battle">
+                    <div style="font-size:4rem;" id="rpg-monster">👾</div>
+                    <div style="flex-grow:1; margin-left:20px;" id="rpg-opts"></div>
+                </div>
+                <button class="btn-restart" onclick="resetGame('rpg')">🔙 重新出題</button>
+            </div>
+        </div>
+
+        <div id="game-balloon" class="game-section">
+            <div id="setup-balloon" class="setup-box">
+                <h3>👨‍🏫 看字選拼音 (拼音-進階)</h3>
+                <div class="hint-block">格式：漢字 , 正確拼音 , 錯誤拼音1 , 錯誤拼音2</div>
+                <textarea id="balloon-input" rows="8">
+蘋果 , píng guǒ , pín guǒ , bīng guǒ
+朋友 , péng yǒu , pén yǒu , póng yǒu</textarea>
+                <button class="btn btn-red" onclick="initBalloon()">✨ 開始派對</button>
+            </div>
+            <div id="play-balloon" class="play-area">
+                <div style="display:flex; justify-content:space-between; width:100%; font-weight:bold; margin-bottom:10px;">
+                    <span id="bal-lvl">第 1 題</span><span id="bal-score">🌟 分數: 0</span>
+                </div>
+                <div class="target-word-box"><div class="target-word" id="bal-word">漢字</div></div>
+                <div style="display:flex; justify-content:center; flex-wrap:wrap; width:100%;" id="bal-area"></div>
+                <button class="btn-restart" onclick="resetGame('balloon')">🔙 重新出題</button>
+            </div>
+        </div>
+
+        <div id="game-rollercoaster" class="game-section">
+            <div id="setup-rollercoaster" class="setup-box">
+                <h3>👨‍🏫 聽音選聲調 (拼音-零基礎)</h3>
+                <div class="hint-block">格式：拼音 , 聲調數字(1-4)。系統會自動發聲！</div>
+                <textarea id="rc-input" rows="8">
+ā , 1
+á , 2
+ǎ , 3
+à , 4</textarea>
+                <button class="btn btn-blue" onclick="initRC()">✨ 啟動過山車</button>
+            </div>
+            <div id="play-rollercoaster" class="play-area">
+                <div class="level-indicator" id="rc-lvl">第 1 題</div>
+                <div class="magic-box" id="rc-box">
+                    <div class="car-animation" id="rc-car">🚗</div>
+                    <button class="audio-btn" id="rc-audio" onclick="playRCSound()">🔊</button>
+                    <div style="font-size:4rem; font-weight:bold; margin:10px 0;" id="rc-pinyin">ā</div>
+                </div>
+                <div class="tracks-container">
+                    <button class="track-btn" style="background:#FF5252;" onclick="checkRCTone(1)">ˉ ➡️ 平平車</button>
+                    <button class="track-btn" style="background:#FFCA28; color:#333;" onclick="checkRCTone(2)">ˊ ↗️ 上山車</button>
+                    <button class="track-btn" style="background:#66BB6A;" onclick="checkRCTone(3)">ˇ ↘️↗️ 山谷車</button>
+                    <button class="track-btn" style="background:#42A5F5;" onclick="checkRCTone(4)">ˋ ↘️ 下山車</button>
+                </div>
+                <button class="btn-restart" onclick="resetGame('rollercoaster')">🔙 重新出題</button>
+            </div>
+        </div>
+
+    </div>
+
+    <div id="modal">
+        <div class="modal-content">
+            <div id="modal-icon" class="modal-icon">🎉</div>
+            <h2 id="modal-title" style="margin: 0 0 10px 0;">標題</h2>
+            <p id="modal-text" style="color: #555; margin-bottom:20px;">內容</p>
+            <button class="btn btn-blue" id="modal-btn" onclick="closeModal()">繼續</button>
+        </div>
+    </div>
+
+    <script>
+        // ================= 共用功能 =================
+        function switchTab(tabId, btnObj) {
+            document.querySelectorAll('.game-section').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('.tab-btn').forEach(el => el.classList.remove('active'));
+            document.getElementById(tabId).classList.add('active');
+            btnObj.classList.add('active');
+        }
+
+        function resetGame(gameType) {
+            document.getElementById(`setup-${gameType}`).style.display = 'block';
+            document.getElementById(`play-${gameType}`).style.display = 'none';
+        }
+
+        let modalCb = null;
+        function showModal(title, text, icon, btnText, cb) {
+            document.getElementById('modal-title').innerText = title;
+            document.getElementById('modal-text').innerText = text;
+            document.getElementById('modal-icon').innerText = icon;
+            document.getElementById('modal-btn').innerText = btnText || "繼續";
+            modalCb = cb || null;
+            document.getElementById('modal').style.display = 'flex';
+        }
+        function closeModal() {
+            document.getElementById('modal').style.display = 'none';
+            if(modalCb) modalCb();
+        }
+
+        function shuffle(array) {
+            return array.sort(() => Math.random() - 0.5);
+        }
+
+        // ================= 1. 故事火車 =================
+        let trLvls=[], trCur=0, trOri=[], trCurArr=[];
+        function initTrain() {
+            const raw = document.getElementById('train-input').value.trim();
+            if(!raw) return showModal("錯誤", "請輸入內容！", "⚠️", "明白");
+            trLvls = raw.split(/\n\s*\n/).map(b => b.split('\n').map(s=>s.trim()).filter(s=>s)).filter(b=>b.length>=2);
+            if(!trLvls.length) return showModal("錯誤", "格式不對", "⚠️", "明白");
+            trCur=0; document.getElementById('setup-train').style.display='none'; document.getElementById('play-train').style.display='flex';
+            loadTrain();
+        }
+        function loadTrain() {
+            document.getElementById('train-lvl').innerText = `關卡 ${trCur+1} / ${trLvls.length}`;
+            trOri = [...trLvls[trCur]];
+            trCurArr = shuffle([...trOri]);
+            if(JSON.stringify(trCurArr)===JSON.stringify(trOri)) trCurArr.reverse();
+            renderTrain();
+        }
+        function renderTrain() {
+            const track = document.getElementById('train-track'); track.innerHTML='';
+            trCurArr.forEach((txt, i) => {
+                track.innerHTML += `
+                    <div class="train-carriage">
+                        <div style="display:flex; flex-direction:column; margin-right:15px;">
+                            <button class="ctrl-btn" onclick="moveTrain(${i},-1)" ${i===0?'disabled':''}>⬆️</button>
+                            <button class="ctrl-btn" onclick="moveTrain(${i},1)" ${i===trCurArr.length-1?'disabled':''}>⬇️</button>
+                        </div>
+                        <div style="font-size:1.2rem; font-weight:bold; color:#283593;">${txt}</div>
+                    </div>`;
+            });
+        }
+        function moveTrain(i, dir) {
+            [trCurArr[i], trCurArr[i+dir]] = [trCurArr[i+dir], trCurArr[i]];
+            renderTrain();
+        }
+        function checkTrainOrder() {
+            if(JSON.stringify(trCurArr)===JSON.stringify(trOri)) {
+                if(trCur<trLvls.length-1) showModal("太棒了！", "前往下一關！", "🚂", "繼續", () => { trCur++; loadTrain(); });
+                else showModal("完成！", "你是邏輯大師！", "🏆", "返回", () => resetGame('train'));
+            } else showModal("哎呀！", "順序有點不通順喔！", "🤔", "重試");
+        }
+
+        // ================= 2. 偵探找線索 =================
+        let detLvls=[], detCur=0, detAnsIdx=-1, detSelIdx=-1;
+        function initDetective() {
+            const raw = document.getElementById('detective-input').value.trim();
+            if(!raw) return;
+            detLvls=[];
+            raw.split(/\n\s*\n/).forEach(b => {
+                let q=b.match(/問題[：:](.*)/), p=b.match(/文章[：:](.*)/s);
+                if(q&&p) detLvls.push({q:q[1].trim(), p:p[1].trim()});
+            });
+            if(!detLvls.length) return showModal("錯誤", "格式不對", "⚠️", "明白");
+            detCur=0; document.getElementById('setup-detective').style.display='none'; document.getElementById('play-detective').style.display='flex';
+            loadDet();
+        }
+        function loadDet() {
+            document.getElementById('det-lvl').innerText = `關卡 ${detCur+1} / ${detLvls.length}`;
+            let data = detLvls[detCur], target="", rawP=data.p;
+            document.getElementById('det-question').innerText = `❓ 問題：${data.q}`;
+            let match=rawP.match(/【(.*?)】/);
+            if(match){ target=match[1]; rawP=rawP.replace(/【|】/g,''); }
+            
+            let sents = rawP.match(/[^。！？]*[。！？]?/g).filter(s=>s.trim());
+            detAnsIdx=-1; detSelIdx=-1;
+            const pDiv=document.getElementById('det-passage'); pDiv.innerHTML='';
+            sents.forEach((s, i) => {
+                if(target&&s.includes(target)) detAnsIdx=i;
+                let span=document.createElement('span');
+                span.className='detective-sentence'; span.innerText=s; span.id=`ds-${i}`;
+                span.onclick=()=> { document.querySelectorAll('.detective-sentence').forEach(e=>e.classList.remove('selected')); span.classList.add('selected'); detSelIdx=i; };
+                pDiv.appendChild(span);
+            });
+        }
+        function checkDetective() {
+            if(detSelIdx===-1) return showModal("提示", "請點擊文章句子！", "🔎", "明白");
+            let el = document.getElementById(`ds-${detSelIdx}`);
+            if(detAnsIdx===-1 || detSelIdx===detAnsIdx) {
+                el.classList.add('correct');
+                if(detCur<detLvls.length-1) showModal("正確！", "找到線索了！", "🎯", "下一關", ()=>{detCur++; loadDet();});
+                else showModal("結案！", "你是大偵探！", "🏆", "返回", ()=>resetGame('detective'));
+            } else {
+                el.classList.add('wrong'); setTimeout(()=>el.classList.remove('wrong'), 1000);
+                showModal("找錯了", "請再試一次！", "❌", "重試");
+            }
+        }
+
+        // ================= 3. 勇者推理塔 =================
+        let rpgLvls=[], rpgCur=0, rpgAns="";
+        function initRpg() {
+            const raw = document.getElementById('rpg-input').value.trim();
+            if(!raw) return;
+            rpgLvls=[];
+            raw.split(/\n\s*\n/).forEach(b => {
+                let lvl={w:[]};
+                b.split('\n').forEach(l=>{
+                    if(l.startsWith('文章')) lvl.p=l.substring(3).trim();
+                    else if(l.startsWith('問題')) lvl.q=l.substring(3).trim();
+                    else if(l.startsWith('正確')) lvl.c=l.substring(3).trim();
+                    else if(l.startsWith('錯誤')) lvl.w.push(l.substring(3).trim());
+                });
+                if(lvl.p&&lvl.q&&lvl.c&&lvl.w.length) rpgLvls.push(lvl);
+            });
+            if(!rpgLvls.length) return showModal("錯誤", "格式錯誤", "⚠️", "明白");
+            rpgCur=0; document.getElementById('setup-rpg').style.display='none'; document.getElementById('play-rpg').style.display='flex';
+            loadRpg();
+        }
+        function loadRpg() {
+            let data = rpgLvls[rpgCur]; rpgAns=data.c;
+            document.getElementById('rpg-lvl').innerText=`樓層 ${rpgCur+1} / ${rpgLvls.length}`;
+            document.getElementById('rpg-text').innerText=data.p;
+            document.getElementById('rpg-q').innerText=`❓ ${data.q}`;
+            let opts = shuffle([data.c, ...data.w.slice(0,3)]);
+            let cDiv = document.getElementById('rpg-opts'); cDiv.innerHTML='';
+            opts.forEach((o,i) => {
+                cDiv.innerHTML+=`<button class="rpg-opt-btn" id="rpg-b-${i}" onclick="atkRpg('${o}',${i})">⚔️ ${o}</button>`;
+            });
+            document.getElementById('rpg-monster').innerText=['👾','👹','🐉'][Math.floor(Math.random()*3)];
+        }
+        function atkRpg(sel, i) {
+            let btn = document.getElementById(`rpg-b-${i}`);
+            if(sel===rpgAns) {
+                btn.classList.add('correct'); document.getElementById('rpg-monster').innerText='💥';
+                setTimeout(()=>{
+                    if(rpgCur<rpgLvls.length-1) showModal("打倒怪物！", "進入下一層！", "⚔️", "前進", ()=>{rpgCur++; loadRpg();});
+                    else showModal("通關！", "推理大師！", "👑", "返回", ()=>resetGame('rpg'));
+                }, 400);
+            } else {
+                btn.classList.add('wrong'); setTimeout(()=>btn.classList.remove('wrong'), 1000);
+            }
+        }
+
+        // ================= 4. 拼音氣球派對 =================
+        let balQs=[], balCur=0, balScore=0;
+        function initBalloon() {
+            const raw = document.getElementById('balloon-input').value.trim();
+            if(!raw) return;
+            balQs = raw.split('\n').map(l=>l.split(',').map(s=>s.trim())).filter(p=>p.length>=3)
+                   .map(p=>({w:p[0], c:p[1], opts:[p[1], ...p.slice(2)]}));
+            if(!balQs.length) return showModal("錯誤", "格式錯誤", "⚠️", "明白");
+            balCur=0; balScore=0; document.getElementById('setup-balloon').style.display='none'; document.getElementById('play-balloon').style.display='flex';
+            loadBal();
+        }
+        function loadBal() {
+            document.getElementById('bal-lvl').innerText=`第 ${balCur+1} 題`;
+            document.getElementById('bal-score').innerText=`🌟 分數: ${balScore}`;
+            let q = balQs[balCur]; document.getElementById('bal-word').innerText=q.w;
+            let area = document.getElementById('bal-area'); area.innerHTML='';
+            shuffle([...q.opts]).forEach(o => {
+                let div=document.createElement('div'); div.className='balloon'; div.innerText=o;
+                div.onclick=()=>{
+                    if(o===q.c) {
+                        div.classList.add('popped'); balScore+=10; document.getElementById('bal-score').innerText=`🌟 分數: ${balScore}`;
+                        setTimeout(()=>{
+                            if(balCur<balQs.length-1){balCur++; loadBal();}
+                            else showModal("完成！", `得分: ${balScore}`, "🏆", "返回", ()=>resetGame('balloon'));
+                        }, 500);
+                    } else {
+                        div.classList.add('wrong-shake'); setTimeout(()=>div.classList.remove('wrong-shake'),400);
+                    }
+                };
+                area.appendChild(div);
+            });
+        }
+
+        // ================= 5. 聲調過山車 =================
+        let rcQs=[], rcCur=0;
+        const synth = window.speechSynthesis;
+        function initRC() {
+            const raw = document.getElementById('rc-input').value.trim();
+            if(!raw) return;
+            rcQs = raw.split('\n').map(l=>l.split(',').map(s=>s.trim())).filter(p=>p.length>=2)
+                 .map(p=>({p:p[0], t:parseInt(p[1])}));
+            if(!rcQs.length) return showModal("錯誤", "格式錯誤", "⚠️", "明白");
+            rcCur=0; document.getElementById('setup-rollercoaster').style.display='none'; document.getElementById('play-rollercoaster').style.display='flex';
+            loadRC();
+        }
+        function loadRC() {
+            document.getElementById('rc-lvl').innerText=`第 ${rcCur+1} 題`;
+            document.getElementById('rc-pinyin').innerText=rcQs[rcCur].p;
+            document.getElementById('rc-car').style.animation='none';
+            setTimeout(playRCSound, 500);
+        }
+        function playRCSound() {
+            if(synth.speaking) synth.cancel();
+            let btn = document.getElementById('rc-audio'); btn.classList.add('playing');
+            let u = new SpeechSynthesisUtterance(rcQs[rcCur].p);
+            u.lang='zh-CN'; u.rate=0.8; u.onend=()=>btn.classList.remove('playing');
+            synth.speak(u);
+        }
+        function checkRCTone(t) {
+            let box=document.getElementById('rc-box'), car=document.getElementById('rc-car');
+            if(t===rcQs[rcCur].t) {
+                car.style.animation=`drive${t} 1.5s ease-in-out forwards`;
+                setTimeout(()=>{
+                    if(rcCur<rcQs.length-1){rcCur++; loadRC();}
+                    else showModal("完成！", "過山車之旅結束！", "🏆", "返回", ()=>resetGame('rollercoaster'));
+                }, 1600);
+            } else {
+                box.style.animation='shake 0.4s'; setTimeout(()=>box.style.animation='', 400); playRCSound();
+            }
+        }
+    </script>
+</body>
+</html>

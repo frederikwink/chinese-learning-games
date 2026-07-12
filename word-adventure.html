@@ -1,0 +1,225 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>30場景！瘋狂中文五要素填詞大冒險</title>
+    <style>
+        body {
+            font-family: 'Comic Sans MS', 'Chalkboard SE', 'Microsoft JhengHei', sans-serif;
+            background-color: #f7f9fc;
+            color: #333;
+            padding: 20px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+        }
+        .game-container {
+            background-color: white;
+            padding: 30px;
+            border-radius: 25px;
+            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+            max-width: 600px;
+            width: 100%;
+            border: 5px solid #4caf50;
+        }
+        h1 {
+            text-align: center;
+            color: #2e7d32;
+            font-size: 28px;
+            margin-bottom: 5px;
+        }
+        p.subtitle {
+            text-align: center;
+            color: #666;
+            margin-top: 0;
+            font-size: 14px;
+            margin-bottom: 25px;
+        }
+        .input-grid {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 6px;
+            color: #37474f;
+            font-size: 15px;
+        }
+        .label-desc {
+            font-size: 12px;
+            color: #78909c;
+            font-weight: normal;
+        }
+        input[type="text"] {
+            width: 100%;
+            padding: 12px;
+            border: 2px solid #cfd8dc;
+            border-radius: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+            transition: all 0.3s;
+        }
+        input[type="text"]:focus {
+            border-color: #4caf50;
+            box-shadow: 0 0 8px rgba(76,175,80,0.3);
+            outline: none;
+        }
+        button {
+            display: block;
+            width: 100%;
+            padding: 15px;
+            background-color: #4caf50;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 20px;
+            font-weight: bold;
+            cursor: pointer;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            transition: all 0.2s;
+            margin-top: 25px;
+        }
+        button:hover { background-color: #43a047; }
+        button:active { transform: scale(0.98); }
+        .story-result {
+            margin-top: 25px;
+            padding: 25px;
+            background-color: #f1f8e9;
+            border-left: 6px solid #4caf50;
+            border-radius: 8px;
+            font-size: 19px;
+            line-height: 1.8;
+            display: none;
+        }
+        .highlight {
+            color: #d84315;
+            font-weight: bold;
+            background-color: #fff9c4;
+            padding: 2px 6px;
+            border-radius: 4px;
+            border-bottom: 2px dashed #d84315;
+        }
+        .story-title {
+            font-weight: bold;
+            color: #1b5e20;
+            margin-bottom: 12px;
+            font-size: 22px;
+            border-bottom: 2px solid #c8e6c9;
+            padding-bottom: 5px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="game-container">
+    <h1>📝 五要素語文大冒險！</h1>
+    <p class="subtitle">內建 30 個超瘋狂場景，輸入字詞即可隨機抽故事！</p>
+    
+    <div class="input-grid">
+        <div class="input-group">
+            <label>1. ⏳ 時間 Time <span class="label-desc">(例如：凌晨三點、上英文課時、兩萬年前)</span></label>
+            <input type="text" id="p_time" placeholder="何時？">
+        </div>
+        
+        <div class="input-group">
+            <label>2. 👤 人物 Character <span class="label-desc">(例如：神奇寶貝、校長、路易吉、蜘蛛俠)</span></label>
+            <input type="text" id="p_char" placeholder="誰？">
+        </div>
+        
+        <div class="input-group">
+            <label>3. 📍 地點 Location <span class="label-desc">(例如：馬桶裡面、Minecraft世界、紅館)</span></label>
+            <input type="text" id="p_loc" placeholder="在哪裡？">
+        </div>
+        
+        <div class="input-group">
+            <label>4. 🏃 活動 Activity <span class="label-desc">(例如：狂吃臭豆腐、大跳芭蕾舞、寫功課)</span></label>
+            <input type="text" id="p_act" placeholder="做什麼事？">
+        </div>
+        
+        <div class="input-group">
+            <label>5. ✨ 形容詞 Adjective <span class="label-desc">(例如：香噴噴的、極度憤怒的、黏答答的)</span></label>
+            <input type="text" id="p_adj" placeholder="怎麼樣的？">
+        </div>
+    </div>
+    
+    <button onclick="generateSuperStory()">🎲 隨機抽取場景並產生故事！</button>
+
+    <div id="story-display" class="story-result"></div>
+</div>
+
+<script>
+    function generateSuperStory() {
+        // 獲取輸入
+        const t = document.getElementById('p_time').value.trim() || '🔍[某個神祕時間]';
+        const c = document.getElementById('p_char').value.trim() || '🔍[神祕人物]';
+        const l = document.getElementById('p_loc').value.trim() || '🔍[神祕地點]';
+        const a = document.getElementById('p_act').value.trim() || '🔍[神祕活動]';
+        const j = document.getElementById('p_adj').value.trim() || '🔍[神祕形容詞]';
+        
+        // 包裝成高亮標籤
+        const time = `<span class="highlight">${t}</span>`;
+        const character = `<span class="highlight">${c}</span>`;
+        const location = `<span class="highlight">${l}</span>`;
+        const activity = `<span class="highlight">${a}</span>`;
+        const adj = `<span class="highlight">${j}</span>`;
+
+        // 30個瘋狂故事庫
+        const stories = [
+            { title: "1. 🎮 Roblox 世界的危機", content: `就在 ${time}，全伺服器最 ${adj} 的玩家 ${character} 突然登入了遊戲。牠沒有去刷副本，反而跑到 ${location} 開始瘋狂地 ${activity}，導致整個遊戲伺服器當機了！` },
+            { title: "2. 🏫 校長室的祕密廣播", content: `記得 ${time} 那天，全校喇叭突然傳出奇怪的聲音。原來是 ${adj} 的 ${character} 闖進了 ${location}。牠居然對著麥克風在大聲地 ${activity}，全校同學都笑翻了。` },
+            { title: "3. 🛸 外星怪獸大進攻", content: `地球防衛隊報告！在 ${time}，一艘飛碟降落了。走下來一個體型 ${adj} 的 ${character}。牠把 ${location} 當作基地，並在那裡命令所有人跟牠一起 ${activity}！` },
+            { title: "4. 🦖 穿越到恐龍時代", content: `時光機發生故障！在 ${time}，我們被載到了遠古時期，驚見一隻 ${adj} 的 ${character}。牠竟然在 ${location} 對著暴龍一邊尖叫一邊 ${activity}！` },
+            { title: "5. ⛏️ Minecraft 的創世神", content: `這是一個方塊世界。在 ${time}，傳說中那位 ${adj} 的 ${character} 突然現身在 ${location}。牠沒有挖礦，而是用方塊蓋了一個舞台並在上面 ${activity}。` },
+            { title: "6. ⚡ 寶可夢究極對決", content: `決賽現場！在 ${time}，訓練家派出了一隻外表 ${adj} 的 ${character}。這隻寶可夢在 ${location} 使出的終極大絕招，竟然是超級大聲地 ${activity}！` },
+            { title: "7. 🕵️ 名偵探的推理", content: `柯南推了推眼鏡，在 ${time} 發表了他的推理：「兇手就是你！那個外表 ${adj} 的 ${character}！你昨晚明明就在 ${location} 偷偷地 ${activity}，我手上有錄影存證！」` },
+            { title: "8. 👻 萬聖節驚魂夜", content: `每當 ${time} 來臨，傳說中那個 ${adj} 的 ${character} 就會甦醒。有人看見牠出沒在 ${location}，一邊飄浮一邊 ${activity}，把附近的野貓都嚇跑了。` },
+            { title: "9. 🏃 瘋狂學校運動會", content: `在 ${time} 的大會接力賽上，最 ${adj} 的選手 ${character} 竟然跑錯了方向，直接衝進 ${location}，並且當著全校裁判的面開始 ${activity}。` },
+            { title: "10. 🎂 終極整人生日派對", content: `就在 ${time} 吹熄蠟燭的那一刻，現場燈光全滅。一個 ${adj} 的 ${character} 突然從 ${location} 跳了出來，二話不說就開始 ${activity}，送給大家一個大驚喜。` },
+            { title: "11. 🧙 霍格華茲的魔法課", content: `在 ${time} 的魔藥學課堂上，${adj} 的 ${character} 不小心念錯了咒語，結果整個人被傳送到 ${location}，還一邊冒煙一邊 ${activity}。` },
+            { title: "12. 📹 破百萬點閱的直播", content: `就在 ${time}，網路上瘋傳一段影片：一位 ${adj} 的 ${character} 在 ${location} 直播。因為牠表演了不可思議的 ${activity}，瞬間吸引了幾百萬人觀看！` },
+            { title: "13. 🧸 玩具總動員之夜", content: `當小主人在 ${time}睡著後，玩具們全活過來了！那隻 ${adj} 的 ${character} 帶領所有玩具佔領了 ${location}，開始通宵大慶祝，在裡面拼命地 ${activity}。` },
+            { title: "14. 🍳 廚房特級小當家", content: `煮飯時間到了！在 ${time}，大廚請來了 ${adj} 的 ${character} 當助手。沒想到牠把 ${location} 搞得一團糟，因為牠竟然用炒鍋在 ${activity}！` },
+            { title: "15. 🐬 瘋狂水族館", content: `在 ${time} 的海豚表演劇場，觀眾席突然一陣驚呼。一隻 ${adj} 的 ${character} 掉進了 ${location}，結果牠比海豚還厲害，在水裡快樂地 ${activity}。` },
+            { title: "16. 🐜 縮小燈大冒險", content: `哆啦A夢用錯了道具！在 ${time}，我們變得像螞蟻一樣小。更可怕的是，一隻 ${adj} 的 ${character} 正在 ${location} 擋住去路，瘋狂地 ${activity}。` },
+            { title: "17. 🦸 超級英雄的日常", content: `即使是保護世界的正義使者，在 ${time} 也是要休息的。有人拍到那位 ${adj} 的 ${character} 躲在 ${location}，卸下裝備在偷偷地 ${activity}。` },
+            { title: "18. 🍬 誤闖糖果工廠", content: `在 ${time}，地板突然裂開，我們掉進了棉花糖海裡。眼前有一隻 ${adj} 的 ${character}。牠在 ${location} 裡一邊吃巧克力，一邊興奮地 ${activity}。` },
+            { title: "19. 🚌 瘋狂校車出發了", content: `就在 ${time} 上學的途中，校車司機居然變成了 ${adj} 的 ${character}！牠把校車開到了 ${location}，並廣播要求所有同學在座位上 ${activity}。` },
+            { title: "20. 🤖 AI 機械人叛亂", content: `科技大突破！在 ${time}，科學家發明了一個外表 ${adj} 的 ${character}。但這台機械人失控了，牠跑到 ${location} 拒絕工作，整天只想要 ${activity}。` },
+            { title: "21. 🌊 亞特蘭提斯海底城", content: `潛水艇在 ${time} 發現了神祕古城。在海中，一個 ${adj} 的 ${character} 居然不需要氧氣罩，正在 ${location} 的珊瑚礁旁邊悠閒地 ${activity}。` },
+            { title: "22. 🦁 瘋狂野生動物園", content: `注意安全！在 ${time}，動物園發出緊急通告，有一隻 ${adj} 的 ${character} 逃出了籠子。管理員最後發現牠躲在 ${location} 裡悠哉地 ${activity}。` },
+            { title: "23. 🛏️ 糟糕！我變成怪獸了", content: `當我在 ${time} 醒來，照鏡子發現自己變成了 ${adj} 的 ${character}！媽媽走進房看到我竟然在 ${location} 做出 ${activity} 的動作，當場嚇得暈倒。` },
+            { title: "24. 👑 新國王的登基大典", content: `歷史性的一刻！在 ${time}，新國王要戴上皇冠了。這位 ${adj} 的 ${character} 緩緩走上台，卻在 ${location} 突然跌倒，變成在全場貴賓面前 ${activity}。` },
+            { title: "25. ⛺ 森林露營驚魂記", content: `在 ${time} 的露營夜，營火突然熄滅。我們帳篷外出現了一個 ${adj} 的影子，原來是 ${character}！牠在 ${location} 圍著我們的帳篷，整晚都在 ${activity}。` },
+            { title: "26. 🏪 超商深夜怪談", content: `這不是開玩笑，在 ${time} 去便利商店買東西時，店員竟然換成了 ${adj} 的 ${character}。牠一邊結帳，一邊在 ${location} 瘋狂地 ${activity}。` },
+            { title: "27. ✈️ 飛機上的不速之客", content: `在一萬公尺的高空上，時間是 ${time}。廣播響起：「各位乘客，我們的頭等艙闖入了一隻 ${adj} 的 ${character}，牠目前正在 ${location} 進行 ${activity}。」` },
+            { title: "28. 🗺️ 尋寶獵人的終點", content: `歷經千辛萬苦，在 ${time}，我們終於打開了藏寶箱。裡面沒有黃金，只有一個 ${adj} 的 ${character}。牠手上拿著地圖，在 ${location} 對著我們 ${activity}。` },
+            { title: "29. 🎤 終極歌喉戰舞台", content: `在 ${time} 的選秀節目總決賽，壓軸嘉賓是 ${adj} 的 ${character}。全場燈光一亮，牠站在 ${location}，竟然不唱歌，反而開始 ${activity}！` },
+            { title: "30. 🚀 2300年的未來世界", content: `歡迎來到未來！在 ${time}，人類出門都坐飛天車。而最 ${adj} 的歷史博物館導覽員竟然是 ${character}，牠在 ${location} 一邊吃著太空乾糧，一邊表演 ${activity}。` }
+        ];
+
+        // 隨機抽取一個故事
+        const randomIndex = Math.floor(Math.random() * stories.length);
+        const selected = stories[randomIndex];
+        
+        // 顯示結果
+        const displayDiv = document.getElementById('story-display');
+        displayDiv.innerHTML = `
+            <div class="story-title">${selected.title}</div>
+            <div>${selected.content}</div>
+        `;
+        
+        displayDiv.style.display = 'block';
+        displayDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+</script>
+
+</body>
+</html>

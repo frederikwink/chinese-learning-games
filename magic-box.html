@@ -1,0 +1,46 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>🔮 一年級部首魔法箱！</title>
+    <style>
+        body { font-family: 'Comic Sans MS', sans-serif; background-color: #fff0f5; text-align: center; padding: 20px; }
+        h1 { color: #ff69b4; font-size: 32px; }
+        p { font-size: 18px; color: #666; }
+        .box-container { display: flex; justify-content: center; gap: 20px; margin-top: 30px; flex-wrap: wrap; }
+        .magic-btn { font-size: 40px; padding: 20px 40px; background: #fff; border: 4px solid #ffb6c1; border-radius: 20px; cursor: pointer; box-shadow: 0 8px 0 #ffb6c1; transition: 0.1s; }
+        .magic-btn:active { transform: translateY(8px); box-shadow: none; }
+        #result { margin-top: 40px; font-size: 50px; min-height: 100px; animation: pop 0.3s ease-in-out; }
+        #explain { font-size: 24px; color: #ff4500; font-weight: bold; margin-top: 10px; }
+        @keyframes pop { 0% { transform: scale(0.5); } 100% { transform: scale(1); } }
+    </style>
+</head>
+<body>
+
+    <h1>🔮 部首魔法箱 (Radical Magic Box)</h1>
+    <p>點擊一個中文魔法符號，看看會變出什麼寶物！</p>
+
+    <div class="box-container">
+        <button class="magic-btn" onclick="castSpell('氵', '💧 Water Family!', '海 (Ocean) / 浪 (Wave) / 汁 (Juice)')">氵</button>
+        <button class="magic-btn" onclick="castSpell('犭', '🐶 Animal Family!', '貓 (Cat) / 狗 (Dog) / 獅 (Lion)')">犭</button>
+        <button class="magic-btn" onclick="castSpell('艹', '🌱 Plant/Grass Family!', '花 (Flower) / 草 (Grass) / 菜 (Veggie)')">艹</button>
+        <button class="magic-btn" onclick="castSpell('木', '🌳 Tree/Wood Family!', '森林 (Forest) / 橋 (Bridge) / 機 (Airplane)')">木</button>
+    </div>
+
+    <div id="result">🎁</div>
+    <div id="explain"></div>
+
+<script>
+    function castSpell(radical, english, words) {
+        let emoji = "🎁";
+        if(radical === '氵') emoji = "🌊 💧 🥛";
+        if(radical === '犭') emoji = "🐱 🐶 🦁";
+        if(radical === '艹') emoji = "🌸 🍀 🍓";
+        if(radical === '木') emoji = "🌳 🍎 🪵";
+        
+        document.getElementById('result').innerText = emoji;
+        document.getElementById('explain').innerHTML = `${radical} = ${english}<br><span style="font-size:20px; color:#555;">Examples: ${words}</span>`;
+    }
+</script>
+</body>
+</html>
