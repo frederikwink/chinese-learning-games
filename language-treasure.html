@@ -442,26 +442,55 @@
             loadBal();
         }
         function loadBal() {
-            document.getElementById('bal-lvl').innerText=`第 ${balCur+1} 題`;
-            document.getElementById('bal-score').innerText=`🌟 分數: ${balScore}`;
-            let q = balQs[balCur]; document.getElementById('bal-word').innerText=q.w;
-            let area = document.getElementById('bal-area'); area.innerHTML='';
-            shuffle([...q.opts]).forEach(o => {
-                let div=document.createElement('div'); div.className='balloon'; div.innerText=o;
-                div.onclick=()=>{
-                    if(o===q.c) {
-                        div.classList.add('popped'); balScore+=10; document.getElementById('bal-score').innerText=`🌟 分數: ${balScore}`;
-                        setTimeout(()=>{
-                            if(balCur<balQs.length-1){balCur++; loadBal();}
-                            else showModal("完成！", `得分: ${balScore}`, "🏆", "返回", ()=>resetGame('balloon'));
-                        }, 500);
+    document.getElementById('bal-lvl').innerText = `第 ${balCur + 1} 題`;
+    document.getElementById('bal-score').innerText = `🌟 分數: ${balScore}`;
+    
+    let q = balQs[balCur];
+    document.getElementById('bal-word').innerText = q.w;
+    
+    let area = document.getElementById('bal-area');
+    area.innerHTML = '';
+    
+    shuffle([...q.opts]).forEach(o => {
+        let div = document.createElement('div');
+        div.className = 'balloon';
+        div.innerText = o;
+        
+        // 點擊氣球 = 選擇答案 + 朗讀
+        div.onclick = () => {
+            // 先朗讀拼音
+            speakPinyin(o);
+            
+            if (o === q.c) {
+                div.classList.add('popped');
+                balScore += 10;
+                document.getElementById('bal-score').innerText = `🌟 分數: ${balScore}`;
+                
+                setTimeout(() => {
+                    if (balCur < balQs.length - 1) {
+                        balCur++;
+                        loadBal();
                     } else {
-                        div.classList.add('wrong-shake'); setTimeout(()=>div.classList.remove('wrong-shake'),400);
+                        showModal("完成！", `最終得分: ${balScore} 分！`, "🏆", "返回", () => resetGame('balloon'));
                     }
-                };
-                area.appendChild(div);
-            });
-        }
+                }, 600);
+            } else {
+                div.classList.add('wrong-shake');
+                setTimeout(() => div.classList.remove('wrong-shake'), 500);
+            }
+        };
+        area.appendChild(div);
+    });
+}
+            // 新增：獨立發聲函數（兩個遊戲共用）
+            function speakPinyin(text) {
+            if (synth.speaking) synth.cancel();
+            let u = new SpeechSynthesisUtterance(text);
+            u.lang = 'zh-CN';
+            u.rate = 0.8;
+            u.pitch = 1.05;
+            synth.speak(u);
+            }
 
         // ================= 5. 聲調過山車 =================
         let rcQs=[], rcCur=0;
