@@ -464,7 +464,6 @@
         div.innerText = o;
         
         div.onclick = () => {
-            speakPinyin(o);   // 點擊氣球讀拼音
             
             if (o === q.c) {
                 div.classList.add('popped');
@@ -493,8 +492,9 @@ function speakPinyin(text) {
     if (synth.speaking) synth.cancel();
     let u = new SpeechSynthesisUtterance(text);
     u.lang = 'zh-CN';
-    u.rate = 0.82;
-    u.pitch = 1.05;
+    u.rate = 0.65;
+    u.pitch = 1.0;
+    u.volume = 1;
     synth.speak(u);
 }
         function repeatWord() {
