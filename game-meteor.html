@@ -115,8 +115,13 @@
             width: 40px;
             height: 40px;
             transform: translateX(-50%);
-            background: url('data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="%234fc3f7"><path d="M12 2L4 10h3v12h10V10h3L12 2z"/></svg>') no-repeat center center;
-            background-size: contain;
+            /* 將原本嘅 SVG 換成文字 Emoji */
+            content: '🛸';
+            font-size: 30px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: none; /* 移除原本嘅 SVG 背景 */
             transition: left 0.1s ease-out;
             z-index: 5;
         }
