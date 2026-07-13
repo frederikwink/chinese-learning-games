@@ -212,10 +212,13 @@
         // --- 初始化系統 (檢查網址參數) ---
         window.onload = function() {
             const urlParams = new URLSearchParams(window.location.search);
-            const hwData = urlParams.get('hw');
+            let hwData = urlParams.get('hw');
             
             if (hwData) {
                 try {
+                    // 【關鍵修復】容錯處理：如果 URL 被錯誤解析，將空格變回 '+' 號以修復 Base64
+                    hwData = hwData.replace(/ /g, '+');
+                    
                     // 解碼 URL 中的 Base64 數據
                     const decodedStr = decodeURIComponent(escape(atob(hwData)));
                     const parsedSentences = JSON.parse(decodedStr);
@@ -313,7 +316,7 @@
             }
         }
 
-        // --- 新增：生成家課連結編碼系統 ---
+        // --- 生成家課連結編碼系統 ---
         function generateHomeworkLink() {
             const validatedSentences = validateTeacherInput();
             if(!validatedSentences) return;
@@ -325,7 +328,9 @@
                 
                 // 獲取當前網址 (去除任何舊的參數)
                 const baseUrl = window.location.href.split('?')[0];
-                const finalUrl = `${baseUrl}?hw=${encodedData}`;
+                
+                // 【關鍵修復】必須使用 encodeURIComponent 確保 Base64 密碼中嘅 '+' 同 '=' 轉為 URL 安全字符 (如 %2B)
+                const finalUrl = `${baseUrl}?hw=${encodeURIComponent(encodedData)}`;
                 
                 const linkInput = document.getElementById('homework-link');
                 linkInput.value = finalUrl;
