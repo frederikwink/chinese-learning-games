@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="zh-HK">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>重組句子貪食蛇</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@400;700;900&display=swap');
+        
+        body {
+            font-family: 'Noto Sans TC', sans-serif;
+            background-color: #f0fdf4;
+            touch-action: none;
+            overflow: hidden;
+            user-select: none;
+        }
+
+        #game-canvas {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.05);
+            display: block;
+            margin: 0 auto;
+            max-width: 100%;
+            max-height: 55vh;
+            aspect-ratio: 1 / 1;
+            position: relative;
+        }
+
+        @keyframes shake {
+            0% { transform: translate(1px, 1px) rotate(0deg); }
+            10% { transform: translate(-1px, -2px) rotate(-1deg); }
+            20% { transform: translate(-3px, 0px) rotate(1deg); }
+            30% { transform: translate(3px, 2px) rotate(0deg); }
+            40% { transform: translate(1px, -1px) rotate(1deg); }
+            50% { transform: translate(-1px, 2px) rotate(-1deg); }
+            60% { transform: translate(-3px, 1px) rotate(0deg); }
+            70% { transform: translate(3px, 1px) rotate(-1deg); }
+            80% { transform: translate(-1px, -1px) rotate(1deg); }
+            90% { transform: translate(1px, 2px) rotate(0deg); }
+            100% { transform: translate(1px, -2px) rotate(-1deg); }
+        }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+
+        .dpad-btn {
+            background: rgba(255, 255, 255, 0.8);
+            border: 2px solid #e2e8f0;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+            color: #475569;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            width: 60px;
+            height: 60px;
+            transition: all 0.1s;
+        }
+        .dpad-btn:active { background: #e2e8f0; transform: scale(0.95); }
+
+        .heart { color: #f43f5e; font-size: 1.5rem; transition: all 0.3s; }
+        .heart.lost { color: #cbd5e1; transform: scale(0.8); }
+
+        #level-overlay {
+            position: absolute;
+            top: 50%; left: 50%;
+            transform: translate(-50%, -50%) scale(0);
+            background: rgba(34, 197, 94, 0.9);
+            color: white;
+            padding: 1rem 2rem;
+            border-radius: 2rem;
+            font-size: 2rem;
+            font-weight: 900;
+            opacity: 0;
+            transition: all 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            pointer-events: none;
+        }
+        #level-overlay.show {
+            transform: translate(-50%, -50%) scale(1);
+            opacity: 1;
+        }
+    </style>
+</head>
+<body class="h-screen w-screen flex flex-col items-center justify-center relative">
+
+    <div id="view-menu" class="absolute inset-0 flex flex-col items-center justify-center bg-green-50 z-20">
+        <div class="bg-white p-8 rounded-3xl shadow-xl text-center max-w-md w-full mx-4">
+            <div class="text-5xl mb-4">🐍</div>
+            <h1 class="text-3xl font-black text-green-600 mb-2">重組句子貪食蛇</h1>
+            <p class="text-gray-500 mb-8 font-medium">自己思考句子順序，吃掉詞語，句子越長，速度越快！</p>
+            <button onclick="startGame()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl mb-4 shadow-lg transition-transform active:scale-95">開始遊戲</button>
+            <button onclick="showTeacherSetup()" class="w-full bg-gray-100 hover:bg-gray-200 text-gray-600 font-bold py-3 rounded-xl transition-transform active:scale-95">👨‍🏫 老師設定</button>
+        </div>
+    </div>
+
+    <div id="view-teacher" class="absolute inset-0 flex flex-col items-center justify-center bg-gray-800 bg-opacity-50 z-30 hidden">
+        <div class="bg-white p-6 rounded-2xl shadow-2xl w-full max-w-lg mx-4 flex flex-col h-[80vh]">
+            <h2 class="text-2xl font-bold text-gray-800 mb-4">📝 自訂重組句子</h2>
+            <p class="text-sm text-gray-500 mb-4">請輸入句子，每句一行。請用斜線 <b>/</b> 分開需要重組的詞語。（最多10關）</p>
+            <textarea id="teacher-input" class="flex-1 w-full p-4 border-2 border-gray-200 rounded-xl mb-4 focus:outline-none focus:border-green-500 resize-none font-mono text-sm" spellcheck="false"></textarea>
+            <div class="flex gap-4">
+                <button onclick="saveTeacherSetup()" class="flex-1 bg-green-500 hover:bg-green-600 text-white font-bold py-3 rounded-xl">儲存並返回</button>
+                <button onclick="cancelTeacherSetup()" class="flex-1 bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl">取消</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="view-game" class="absolute inset-0 flex flex-col hidden bg-green-50">
+        <div class="w-full max-w-2xl mx-auto px-4 py-3 flex justify-between items-center bg-white shadow-sm rounded-b-2xl">
+            <div class="flex flex-col">
+                <span class="text-sm font-bold text-gray-400">關卡 <span id="hud-level" class="text-green-500">1/10</span></span>
+                <div id="hud-lives" class="flex gap-1 mt-1"></div>
+            </div>
+            <div class="flex-1 text-center px-4">
+                <div id="hud-sentence" class="text-lg md:text-xl font-bold text-gray-700 min-h-[2rem]"></div>
+            </div>
+            <button onclick="quitGame()" class="text-gray-400 hover:text-red-500">
+                <svg xmlns="http://www.w3.org/2000/svg" class="h-8 w-8" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+            </button>
+        </div>
+
+        <div class="flex-1 flex items-center justify-center p-2 mt-2 relative" id="canvas-wrapper">
+            <canvas id="game-canvas" width="600" height="600"></canvas>
+            <div id="level-overlay">第 2 關</div>
+        </div>
+
+        <div class="pb-6 pt-2 flex flex-col items-center justify-center gap-2">
+            <button class="dpad-btn" id="btn-up">▲</button>
+            <div class="flex gap-12">
+                <button class="dpad-btn" id="btn-left">◀</button>
+                <button class="dpad-btn" id="btn-right">▶</button>
+            </div>
+            <button class="dpad-btn" id="btn-down">▼</button>
+        </div>
+    </div>
+
+    <div id="view-gameover" class="absolute inset-0 flex flex-col items-center justify-center bg-black bg-opacity-70 z-40 hidden">
+        <div class="bg-white p-8 rounded-3xl shadow-xl text-center max-w-sm w-full mx-4">
+            <div class="text-5xl mb-4">😵</div>
+            <h1 class="text-3xl font-black text-red-500 mb-2">挑戰失敗</h1>
+            <p class="text-gray-600 mb-6 font-medium">速度太快還是撞錯詞語了？</p>
+            <button onclick="resetGame(true)" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl shadow-lg mb-3">重新開始</button>
+            <button onclick="returnToMenu()" class="w-full bg-gray-200 hover:bg-gray-300 text-gray-700 font-bold py-3 rounded-xl">返回主選單</button>
+        </div>
+    </div>
+
+    <div id="view-victory" class="absolute inset-0 flex flex-col items-center justify-center bg-green-500 z-40 hidden">
+        <div class="bg-white p-8 rounded-3xl shadow-xl text-center max-w-sm w-full mx-4">
+            <div class="text-6xl mb-4">🏆</div>
+            <h1 class="text-4xl font-black text-green-600 mb-2">過關斬將！</h1>
+            <p class="text-gray-600 mb-6 font-medium">你帶著超長的尾巴完成了所有任務！</p>
+            <button onclick="returnToMenu()" class="w-full bg-green-500 hover:bg-green-600 text-white font-bold py-4 rounded-xl text-xl shadow-lg">完成</button>
+        </div>
+    </div>
+
+    <script>
+        // 加入咗長字詞，方便你直接測試多格碰撞
+        const DEFAULT_SENTENCES = [
+            "我/今天/非常之超級開心",
+            "媽媽/去街市/買紅蘋果",
+            "老師/在課室/教書",
+            "哥哥/喜歡/踢足球",
+            "妹妹/一邊唱歌/一邊跳舞",
+            "小明/把所有數學功課/做完了",
+            "天上/有/很多星星",
+            "公園裡/有/漂亮的花朵",
+            "我們/一起/玩遊戲",
+            "努力學習/才能/考取好成績"
+        ];
+        
+        let sentenceList = [...DEFAULT_SENTENCES];
+        let currentLevel = 0;
+        let lives = 5;
+        let currentSentenceParts = [];
+        let eatenParts = [];
+        let currentTargetIndex = 0;
+
+        const canvas = document.getElementById('game-canvas');
+        const ctx = canvas.getContext('2d');
+        const GRID_SIZE = 40; 
+        const TILE_COUNT = 15; 
+        
+        let gameLoopReq;
+        let moveInterval = 350; 
+        const MIN_SPEED = 130;  
+        
+        let isGameActive = false;    
+        let isPlaying = false;       
+        let isInvincible = false;    
+        let isTransitioning = false; 
+        let isWaitingForStart = false; 
+        
+        let lastMoveTime = 0;
+        let snake = [];
+        let dx = 1, dy = 0;
+        let nextDx = 1, nextDy = 0; 
+        let wordsOnBoard = [];
+        let particles = [];
+
+        let audioCtx;
+        function initAudio() {
+            if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if (audioCtx.state === 'suspended') audioCtx.resume();
+        }
+
+        function playSound(type) {
+            if (!audioCtx) return;
+            const osc = audioCtx.createOscillator();
+            const gain = audioCtx.createGain();
+            osc.connect(gain); gain.connect(audioCtx.destination);
+            const now = audioCtx.currentTime;
+            
+            if(type === 'eat') {
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(600, now); osc.frequency.exponentialRampToValueAtTime(1200, now + 0.1);
+                gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.1);
+                osc.start(now); osc.stop(now + 0.1);
+            } else if(type === 'wrong') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, now); osc.frequency.linearRampToValueAtTime(100, now + 0.3);
+                gain.gain.setValueAtTime(0.5, now); gain.gain.exponentialRampToValueAtTime(0.01, now + 0.3);
+                osc.start(now); osc.stop(now + 0.3);
+            } else if(type === 'win') {
+                osc.type = 'square';
+                osc.frequency.setValueAtTime(400, now); osc.frequency.setValueAtTime(600, now + 0.2);
+                gain.gain.setValueAtTime(0.3, now); gain.gain.linearRampToValueAtTime(0, now + 0.4);
+                osc.start(now); osc.stop(now + 0.4);
+            } else if(type === 'lose') {
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(300, now); osc.frequency.exponentialRampToValueAtTime(50, now + 0.5);
+                gain.gain.setValueAtTime(0.5, now); gain.gain.linearRampToValueAtTime(0, now + 0.5);
+                osc.start(now); osc.stop(now + 0.5);
+            }
+        }
+
+        function switchView(viewId) {
+            ['view-menu', 'view-teacher', 'view-game', 'view-gameover', 'view-victory'].forEach(id => {
+                document.getElementById(id).classList.add('hidden');
+            });
+            document.getElementById(viewId).classList.remove('hidden');
+        }
+
+        function showTeacherSetup() {
+            document.getElementById('teacher-input').value = sentenceList.join('\n');
+            switchView('view-teacher');
+        }
+
+        function cancelTeacherSetup() { switchView('view-menu'); }
+
+        function saveTeacherSetup() {
+            const rawText = document.getElementById('teacher-input').value;
+            const newSentences = rawText.split('\n').map(s => s.trim()).filter(s => s.length > 0);
+            let valid = true;
+            for(let s of newSentences) {
+                if(!s.includes('/')) { alert('每句句子必須使用斜線 (/) 來分開詞語！\n例如：我/去/上學'); valid = false; break; }
+            }
+            if(valid) {
+                sentenceList = newSentences.length > 10 ? newSentences.slice(0, 10) : newSentences;
+                switchView('view-menu');
+            }
+        }
+
+        function updateHUD() {
+            document.getElementById('hud-level').innerText = `${currentLevel + 1}/${sentenceList.length}`;
+            const livesContainer = document.getElementById('hud-lives');
+            livesContainer.innerHTML = '';
+            for (let i = 0; i < 5; i++) {
+                const heart = document.createElement('span');
+                heart.innerHTML = '❤️';
+                heart.className = `heart ${i >= lives ? 'lost' : ''}`;
+                livesContainer.appendChild(heart);
+            }
+
+            let progressHtml = '';
+            for (let i = 0; i < currentSentenceParts.length; i++) {
+                if (i < currentTargetIndex) {
+                    progressHtml += `<span class="text-green-600 border-b-2 border-green-500 mx-1">${currentSentenceParts[i]}</span>`;
+                } else if (i === currentTargetIndex) {
+                    progressHtml += `<span class="text-gray-300 border-b-2 border-dashed border-gray-300 mx-1 px-2">${"?".repeat(currentSentenceParts[i].length)}</span>`;
+                } else {
+                    progressHtml += `<span class="text-transparent border-b-2 border-dashed border-gray-200 mx-1 px-2">__</span>`;
+                }
+            }
+            document.getElementById('hud-sentence').innerHTML = progressHtml;
+        }
+
+        function shakeScreen() {
+            const wrapper = document.getElementById('canvas-wrapper');
+            wrapper.classList.remove('shake'); void wrapper.offsetWidth;
+            wrapper.classList.add('shake');
+        }
+
+        function startGame() {
+            initAudio();
+            isGameActive = true;
+            resetGame(true);
+            switchView('view-game');
+            if(!gameLoopReq) gameLoopReq = requestAnimationFrame(gameLoop);
+        }
+
+        function quitGame() {
+            isGameActive = false;
+            isPlaying = false;
+            cancelAnimationFrame(gameLoopReq);
+            gameLoopReq = null;
+            switchView('view-menu');
+        }
+        function returnToMenu() { switchView('view-menu'); }
+
+        function resetGame(fullReset = false) {
+            if (fullReset) {
+                currentLevel = 0;
+                lives = 5;
+                moveInterval = 350; 
+                snake = [{x: 7, y: 7}, {x: 6, y: 7}, {x: 5, y: 7}]; 
+                dx = 1; dy = 0;
+                nextDx = 1; nextDy = 0;
+            }
+            initLevel();
+        }
+
+        function initLevel() {
+            currentSentenceParts = sentenceList[currentLevel].split('/').map(p => p.trim());
+            eatenParts = [];
+            currentTargetIndex = 0;
+            isInvincible = false;
+            particles = [];
+            
+            spawnWords();
+            updateHUD();
+            
+            isPlaying = false;
+            isTransitioning = true;
+            isWaitingForStart = false; 
+            
+            const overlay = document.getElementById('level-overlay');
+            overlay.innerText = `第 ${currentLevel + 1} 關`;
+            overlay.classList.add('show');
+            
+            setTimeout(() => {
+                overlay.classList.remove('show');
+                isTransitioning = false;
+                isWaitingForStart = true; 
+            }, 1500);
+        }
+
+        // 動態分配網格空間算法
+        function getEmptySpaceForWord(text) {
+            ctx.font = "bold 16px 'Noto Sans TC'"; 
+            const textWidth = ctx.measureText(text).width;
+            // 數學換算：計算像素長度需要幾多個物理網格 (40px)
+            const gridW = Math.max(1, Math.ceil((textWidth + 24) / GRID_SIZE)); 
+            
+            let space, valid = false, attempts = 0;
+            while (!valid && attempts < 200) {
+                space = {
+                    x: Math.floor(Math.random() * (TILE_COUNT - 2 - gridW)) + 1, // 確保右邊唔會超出邊界
+                    y: Math.floor(Math.random() * (TILE_COUNT - 2)) + 1,
+                    w: gridW // 記錄此詞語佔用多少格
+                };
+                valid = true;
+                
+                // 檢查是否與蛇身重疊
+                for (let segment of snake) { 
+                    if (segment.y === space.y && segment.x >= space.x && segment.x < space.x + space.w) valid = false; 
+                }
+                
+                // 檢查是否與其他詞語重疊 (X, Y 軸保留最少 1 格緩衝)
+                for (let w of wordsOnBoard) { 
+                    if (Math.abs(w.y - space.y) <= 1) { // 同一行或相鄰行
+                        // 檢查 X 軸是否重疊或過於貼近
+                        if (space.x <= w.x + w.w && space.x + space.w >= w.x - 1) valid = false; 
+                    }
+                }
+                attempts++;
+            }
+            return space;
+        }
+
+        function spawnWords() {
+            wordsOnBoard = [];
+            for (let i = 0; i < currentSentenceParts.length; i++) {
+                const pos = getEmptySpaceForWord(currentSentenceParts[i]); // 使用新算法
+                wordsOnBoard.push({ 
+                    text: currentSentenceParts[i], 
+                    x: pos.x, 
+                    y: pos.y, 
+                    w: pos.w, // 物理寬度
+                    index: i 
+                });
+            }
+        }
+
+        function handleInput(e) {
+            if (!isGameActive || isTransitioning) return; 
+            
+            const key = e.key || e;
+            let validKey = false;
+            let dir = '';
+
+            if (key === 'ArrowUp' || key === 'w' || key === 'W' || key === 'up') { dir = 'up'; validKey = true; }
+            if (key === 'ArrowDown' || key === 's' || key === 'S' || key === 'down') { dir = 'down'; validKey = true; }
+            if (key === 'ArrowLeft' || key === 'a' || key === 'A' || key === 'left') { dir = 'left'; validKey = true; }
+            if (key === 'ArrowRight' || key === 'd' || key === 'D' || key === 'right') { dir = 'right'; validKey = true; }
+
+            if (validKey) {
+                let moveAccepted = false;
+                
+                if (dir === 'up' && dy === 0) { nextDx = 0; nextDy = -1; moveAccepted = true; }
+                else if (dir === 'down' && dy === 0) { nextDx = 0; nextDy = 1; moveAccepted = true; }
+                else if (dir === 'left' && dx === 0) { nextDx = -1; nextDy = 0; moveAccepted = true; }
+                else if (dir === 'right' && dx === 0) { nextDx = 1; nextDy = 0; moveAccepted = true; }
+
+                if (isWaitingForStart) {
+                    if ((dir === 'up' && dy === -1) ||
+                        (dir === 'down' && dy === 1) ||
+                        (dir === 'left' && dx === -1) ||
+                        (dir === 'right' && dx === 1)) {
+                        moveAccepted = true;
+                    }
+                    
+                    if (moveAccepted) {
+                        isWaitingForStart = false;
+                        isPlaying = true;
+                        lastMoveTime = performance.now();
+                    }
+                }
+            }
+        }
+
+        window.addEventListener('keydown', handleInput);
+        document.getElementById('btn-up').addEventListener('pointerdown', () => handleInput('up'));
+        document.getElementById('btn-down').addEventListener('pointerdown', () => handleInput('down'));
+        document.getElementById('btn-left').addEventListener('pointerdown', () => handleInput('left'));
+        document.getElementById('btn-right').addEventListener('pointerdown', () => handleInput('right'));
+
+        let touchStartX = 0, touchStartY = 0;
+        canvas.addEventListener('touchstart', e => { touchStartX = e.changedTouches[0].screenX; touchStartY = e.changedTouches[0].screenY; }, {passive: true});
+        canvas.addEventListener('touchend', e => {
+            let diffX = e.changedTouches[0].screenX - touchStartX;
+            let diffY = e.changedTouches[0].screenY - touchStartY;
+            if (Math.abs(diffX) > Math.abs(diffY)) {
+                if (Math.abs(diffX) > 30) diffX > 0 ? handleInput('right') : handleInput('left');
+            } else {
+                if (Math.abs(diffY) > 30) diffY > 0 ? handleInput('down') : handleInput('up');
+            }
+        }, {passive: true});
+
+        function createParticles(x, y, color) {
+            for(let i=0; i<15; i++) {
+                particles.push({ x: x * GRID_SIZE + GRID_SIZE/2, y: y * GRID_SIZE + GRID_SIZE/2, vx: (Math.random() - 0.5) * 8, vy: (Math.random() - 0.5) * 8, life: 1.0, color: color });
+            }
+        }
+
+        function takeDamage() {
+            lives--;
+            playSound('wrong'); shakeScreen(); updateHUD();
+            
+            isPlaying = false; 
+            
+            if (lives <= 0) {
+                isGameActive = false; 
+                playSound('lose');
+                setTimeout(() => switchView('view-gameover'), 500);
+            } else {
+                isTransitioning = true; 
+                isInvincible = true;    
+                
+                setTimeout(() => {
+                    isTransitioning = false;
+                    isWaitingForStart = true; 
+                }, 500);
+
+                setTimeout(() => {
+                    isInvincible = false;
+                }, 1500);
+            }
+        }
+
+        function checkLevelComplete() {
+            if (currentTargetIndex >= currentSentenceParts.length) {
+                playSound('win');
+                currentLevel++;
+                isPlaying = false;
+                isTransitioning = true; 
+                
+                setTimeout(() => {
+                    if (currentLevel >= sentenceList.length) {
+                        isGameActive = false;
+                        switchView('view-victory');
+                    } else {
+                        initLevel();
+                    }
+                }, 1000);
+            }
+        }
+
+        function update() {
+            dx = nextDx; dy = nextDy;
+            const head = { x: snake[0].x + dx, y: snake[0].y + dy };
+            
+            if (head.x < 0 || head.x >= TILE_COUNT || head.y < 0 || head.y >= TILE_COUNT) {
+                dx = -dx; dy = -dy; 
+                nextDx = dx; nextDy = dy;
+                takeDamage();
+                return;
+            }
+
+            for (let i = 1; i < snake.length; i++) {
+                if (head.x === snake[i].x && head.y === snake[i].y) {
+                    takeDamage(); return;
+                }
+            }
+
+            snake.unshift(head);
+            let ate = false;
+
+            for (let i = 0; i < wordsOnBoard.length; i++) {
+                const w = wordsOnBoard[i];
+                // 【核心修復】物理區間碰撞檢測：只要蛇頭踩入 w.x 至 w.x + w.w 嘅任何一格，都算命中！
+                if (head.y === w.y && head.x >= w.x && head.x < w.x + w.w) {
+                    if (w.index === currentTargetIndex) {
+                        playSound('eat');
+                        // 粒子特效喺蛇頭撞擊嘅位置爆發，更自然
+                        createParticles(head.x, head.y, '#22c55e');
+                        wordsOnBoard.splice(i, 1);
+                        currentTargetIndex++;
+                        ate = true;
+                        updateHUD();
+                        
+                        moveInterval = Math.max(MIN_SPEED, moveInterval - 8);
+                        snake.push({x: snake[snake.length-1].x, y: snake[snake.length-1].y});
+                        
+                        checkLevelComplete();
+                    } else {
+                        takeDamage(); 
+                        snake.shift(); 
+                        return; 
+                    }
+                    break;
+                }
+            }
+
+            if (!ate) snake.pop();
+        }
+
+        function draw() {
+            ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, canvas.width, canvas.height);
+            ctx.strokeStyle = '#f1f5f9'; ctx.lineWidth = 1;
+            for(let i=0; i<=TILE_COUNT; i++) {
+                ctx.beginPath(); ctx.moveTo(i * GRID_SIZE, 0); ctx.lineTo(i * GRID_SIZE, canvas.height); ctx.stroke();
+                ctx.beginPath(); ctx.moveTo(0, i * GRID_SIZE); ctx.lineTo(canvas.width, i * GRID_SIZE); ctx.stroke();
+            }
+
+            ctx.textAlign = "center"; ctx.textBaseline = "middle"; ctx.font = "bold 16px 'Noto Sans TC'";
+            
+            for (let w of wordsOnBoard) {
+                // 【核心修復】視覺渲染必須對齊物理 Hitbox
+                const leftX = w.x * GRID_SIZE; // 最左邊界
+                const cy = w.y * GRID_SIZE + GRID_SIZE/2; // 垂直置中
+                const bubbleW = w.w * GRID_SIZE - 4; // 氣泡寬度佔用完整嘅 W 格
+                const bubbleH = GRID_SIZE - 4;
+                
+                ctx.fillStyle = '#f8fafc'; 
+                ctx.strokeStyle = '#cbd5e1'; 
+                ctx.lineWidth = 2;
+                
+                ctx.beginPath(); 
+                ctx.roundRect(leftX + 2, cy - bubbleH/2, bubbleW, bubbleH, 8); 
+                ctx.fill(); 
+                ctx.stroke();
+                
+                ctx.fillStyle = '#64748b'; 
+                // 文字精準放置喺整個氣泡嘅正中心
+                ctx.fillText(w.text, leftX + (w.w * GRID_SIZE) / 2, cy);
+            }
+
+            if (!isInvincible || Math.floor(performance.now() / 100) % 2 === 0) { 
+                for (let i = snake.length - 1; i > 0; i--) {
+                    const segment = snake[i], ratio = i / snake.length;
+                    ctx.fillStyle = `hsl(140, 70%, ${50 + ratio * 30}%)`; 
+                    const x = segment.x * GRID_SIZE, y = segment.y * GRID_SIZE;
+                    ctx.beginPath(); ctx.roundRect(x + 2, y + 2, GRID_SIZE - 4, GRID_SIZE - 4, 8); ctx.fill();
+                }
+
+                const head = snake[0], hx = head.x * GRID_SIZE, hy = head.y * GRID_SIZE;
+                ctx.fillStyle = '#16a34a'; ctx.beginPath(); ctx.roundRect(hx, hy, GRID_SIZE, GRID_SIZE, 10); ctx.fill();
+                
+                ctx.fillStyle = 'white';
+                let eye1x, eye1y, eye2x, eye2y;
+                if (dx === 1) { eye1x = hx + 26; eye1y = hy + 10; eye2x = hx + 26; eye2y = hy + 26; } 
+                else if (dx === -1) { eye1x = hx + 10; eye1y = hy + 10; eye2x = hx + 10; eye2y = hy + 26; } 
+                else if (dy === 1) { eye1x = hx + 10; eye1y = hy + 26; eye2x = hx + 26; eye2y = hy + 26; } 
+                else { eye1x = hx + 10; eye1y = hy + 10; eye2x = hx + 26; eye2y = hy + 10; }
+                
+                ctx.beginPath(); ctx.arc(eye1x, eye1y, 4, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eye2x, eye2y, 4, 0, Math.PI*2); ctx.fill();
+                
+                ctx.fillStyle = 'black';
+                ctx.beginPath(); ctx.arc(eye1x + dx*2, eye1y + dy*2, 2, 0, Math.PI*2); ctx.fill();
+                ctx.beginPath(); ctx.arc(eye2x + dx*2, eye2y + dy*2, 2, 0, Math.PI*2); ctx.fill();
+            }
+
+            if (isWaitingForStart) {
+                const alpha = 0.4 + Math.sin(performance.now() / 150) * 0.6;
+                ctx.fillStyle = `rgba(22, 163, 74, ${alpha})`;
+                ctx.font = "bold 20px 'Noto Sans TC'";
+                ctx.fillText("按方向鍵或滑動起步", canvas.width / 2, 30);
+            }
+
+            for(let i = particles.length - 1; i >= 0; i--) {
+                let p = particles[i]; p.x += p.vx; p.y += p.vy; p.life -= 0.05;
+                if(p.life <= 0) particles.splice(i, 1);
+                else {
+                    ctx.fillStyle = p.color; ctx.globalAlpha = p.life;
+                    ctx.beginPath(); ctx.arc(p.x, p.y, 3, 0, Math.PI*2); ctx.fill();
+                    ctx.globalAlpha = 1.0;
+                }
+            }
+        }
+
+        function gameLoop(timestamp) {
+            if (!isGameActive) return; 
+            
+            if (isPlaying && timestamp - lastMoveTime >= moveInterval) {
+                update(); 
+                lastMoveTime = timestamp;
+            }
+            
+            draw(); 
+            gameLoopReq = requestAnimationFrame(gameLoop);
+        }
+    </script>
+</body>
+</html>
+
+
